@@ -1,0 +1,22 @@
+{
+  "name": "conrad-app",
+  "version": "0.0.1",
+  "main": "main.js",
+  "devDependencies": {
+    "electron-prebuilt": "^0.36.7",
+    "flot": "^0.8.0-alpha"
+  },
+  "description": "desktop application for ConRad treatment planning system",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "flot": "^0.8.0-alpha",
+    "electron-prebuilt": "^0.36.7"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Baris Ungun",
+  "license": "GPLv3"
+}

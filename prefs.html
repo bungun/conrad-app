@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	<button id='hide-preferences'></button>
+	Preferences
+	<script>
+		var ipcRenderer = require('electron').ipcRenderer
+		var button = document.getElementById('hide-preferences')
+		button.textContent = 'Hide'
+		button.addEventListener('click', function() {
+			ipcRenderer.send('hide-prefs')
+		})
+	</script>
+</body>
+</html>

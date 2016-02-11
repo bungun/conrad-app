@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	Editor
+	<button id='hide-editor'></button>
+	<script>
+		var ipcRenderer = require('electron').ipcRenderer
+		var button = document.getElementById('hide-editor')
+		button.textContent = 'Hide'
+		button.addEventListener('click', function() {
+			ipcRenderer.send('toggle-editor')
+		})
+	</script>
+
+	<!-- <div id='editor-main' style='width: 80%; display: flex; flex-direction: row; flex-wrap: wrap'> -->
+		<!-- <div style='height: 40%; width 40%; color: #f00'>First</div> -->
+		<!-- <div style='height: 40%; width 40%; color: #0f0'>Second</div> -->
+	<!-- </div> -->
+</body>
+</html>

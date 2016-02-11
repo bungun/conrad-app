@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	Case Selection
+	<script type="text/javascript">
+		var ipcRenderer = require('electron').ipcRenderer
+		var button = document.createElement('button')
+		button.textContent = 'Hide'
+		button.addEventListener('click', function() {
+			ipcRenderer.send('hide-case')
+		})
+		document.body.appendChild(button)
+	</script>
+</body>
+</html>
