@@ -20,20 +20,27 @@
   </head>
   <body class=' full bleed'>
     <h1>Hello ConRad!</h1>
+    <p>
     We are using node <script>document.write(process.versions.node)</script>,
     Chrome <script>document.write(process.versions.chrome)</script>,
     and Electron <script>document.write(process.versions.electron)</script>.
-
-
+    </p>
+    <button id='run-button'>Run</button>
+    <div>Target: weight_underdose<span id='obj-wunder'></span><button id='wunder-x2'>Increase</button><button id='wunder-x05'>Decrease</button></div>
+    <div>Target: weight_overdose<span id='obj-wover'></span><button id='wover-x2'>Increase</button><button id='wover-x05'>Decrease</button></div>
+    <div>OAR: weight<span id='obj-wunder'></span><button id='w-x2'>Increase</button><button id='w-x05'>Decrease</button></div>
     <div id='placeholder' style='height: 80%; width: 80%'></div>
     <div id='constraint-info' style='visible: false; width:'></div>
     <script>require('./test.js')</script>
 
     <script type="text/javascript">
 
+    CONRAD_SERVER = 'http://localhost:5000/'
+    require('electron-cookies')
 
 
     var dvhPlot = {}
+    dvhPlot.sessioned = false
     dvhPlot.upperConstraintIDs = {}
     dvhPlot.lowerConstraintIDs = {}
     dvhPlot.upperConstraints = []
@@ -48,6 +55,8 @@
     dvhPlot.draw = null
     dvhPlot.structureName = 'test structure'
     dvhPlot.structureColor = '#b00'
+    dvhPlot.objectives = {0: {}, 1: {}}
+
 
     function showConstraintInfo(percentile, dose, direction){
       var infoBox = $('#constraint-info')
@@ -121,7 +130,7 @@
       ctx.lineTo(x, y + size);
     }
 
-    var useTriangles = false
+    var useTriangles = true
     var upperSymbol = nonnegOrthantBracket
     var lowerSymbol = nonposOrthantBracket
     if (useTriangles){
@@ -150,8 +159,14 @@
 
     function buildConstraintSeries(constraintSet){
       var iLower = 0; iUpper = 0
+      dvhPlot.upperConstraints = []
+      dvhPlot.lowerConstraints = []
+      dvhPlot.upperConstraintIDs = []
+      dvhPlot.lowerConstraintIDs = []
+
       for (constrID in constraintSet) {
         constr = constraintSet[constrID]
+        console.log(constr)
         if (constr[2] === '<'){
           dvhPlot.upperConstraints.push([constr[0], 100 * constr[1]])
           dvhPlot.upperConstraintIDs[iUpper] = constrID
@@ -183,12 +198,16 @@
       legend: false               
     };
 
-    dvhPlot.plotData = [ { data: dvhPlot.upperConstraints, label: 'upper constraints <STRUCTURE>', 
-      editable: true, lines: {show: false}, points: {show: true, symbol: upperSymbol}, color: dvhPlot.structureColor},
-      { data: dvhPlot.lowerConstraints, label: 'lower constraints <STRUCTURE>', 
-      editable: true, lines: {show: false}, points: {show: true, symbol: lowerSymbol}, color: dvhPlot.structureColor},
-      { data: dvhPlot.dvhCurve, label: 'DVH curve <STRUCTURE>', 
-      editable: false, lines: {show: true}, points: {show: false}, color: dvhPlot.structureColor} ];
+
+    function setPlotData(){
+      dvhPlot.plotData = [ { data: dvhPlot.upperConstraints, label: 'upper constraints <STRUCTURE>', 
+        editable: true, lines: {show: false}, points: {show: true, symbol: upperSymbol}, color: dvhPlot.structureColor},
+        { data: dvhPlot.lowerConstraints, label: 'lower constraints <STRUCTURE>', 
+        editable: true, lines: {show: false}, points: {show: true, symbol: lowerSymbol}, color: dvhPlot.structureColor},
+        { data: dvhPlot.dvhCurve, label: 'DVH curve <STRUCTURE>', 
+        editable: false, lines: {show: true}, points: {show: false}, color: dvhPlot.structureColor} ];
+    }
+    setPlotData()
 
     var plot = $.plot(dvhPlot.canvas, dvhPlot.plotData, dvhPlot.plotOptions);
 
@@ -237,30 +256,203 @@
             plot.highlight(item.series, item.datapoint);
         }
     });
+
     $("#placeholder").bind("plotdown", function(event,pos,item){
       $("#log").append("\nplotdown(" + item.seriesIndex + "," + item.dataIndex + ")"); });
+
     $("#placeholder").bind("plotup", function(event,pos,item){
       $("#log").append( "\nplotup at " + pos.x1.toFixed(2) + "," + pos.y1.toFixed(2)); });
+
     $("#placeholder").bind("datadrop", function(event,pos,item) {
-      var txt = "Datapoint(" + item.seriesIndex + "," + item.dataIndex + ") dragged";
-      txt+= "\nfrom " + item.datapoint[0].toFixed(2) + " , " + item.datapoint[1].toFixed(2);
-      txt+= "\nto " + pos.x1.toFixed(2) + " , " + pos.y1.toFixed(2);
-      $("#dragdropdata").html("<b>" + txt + "</b>");
-      $("#log").append( "\ndatadrop(" + item.seriesIndex + "," + item.dataIndex + ")"
-               +" to " + pos.x1.toFixed(2) + "," + pos.y1.toFixed(2));
-      if(true) {
+      // var txt = "Datapoint(" + item.seriesIndex + "," + item.dataIndex + ") dragged";
+      // txt+= "\nfrom " + item.datapoint[0].toFixed(2) + " , " + item.datapoint[1].toFixed(2);
+      // txt+= "\nto " + pos.x1.toFixed(2) + " , " + pos.y1.toFixed(2);
+      // $("#dragdropdata").html("<b>" + txt + "</b>");
+      // $("#log").append( "\ndatadrop(" + item.seriesIndex + "," + item.dataIndex + ")"
+      //          +" to " + pos.x1.toFixed(2) + "," + pos.y1.toFixed(2));
+
         dvhPlot.plotData[item.seriesIndex].data[item.dataIndex] = [pos.x1,pos.y1];
         plot = $.plot(dvhPlot.canvas, dvhPlot.plotData, dvhPlot.plotOptions);
         console.log("GET CONSTRAINT ID")
-        console.log(getConstraintID(item.seriesIndex, item.dataIndex))
+        var cid = getConstraintID(item.seriesIndex, item.dataIndex)
+        console.log(cid)
         console.log("GET COORDINATES")
         console.log("x ", pos.x1, "y", pos.y1)
+        var symbol
+        if (cid in dvhPlot.upperConstraintIDs) {
+          symbol = '<'
+        } else {
+          symbol = '>'
+        }
         console.log("UPDATE COSNTRAINT")
         console.log("SEND DVH CONSTRAINT!")
         console.log("RUN!")
         console.log("REDRAW DVH CURVE")
-      }
+
+        send_constraint(cid, pos.x1, pos.y1, symbol)
     });
+
+
+    var cases = null
+    function login(){
+      if (!dvhPlot.sessioned){
+        $.getJSON( CONRAD_SERVER + 'login/', {username: 'admin', password: 'default'}, function(result) {
+          console.log(result)
+        })
+      }
+      return this
+    }
+
+    function check_session(){
+      $.getJSON( CONRAD_SERVER + '_check_session/', function(result) {
+        console.log(result)
+        dvhPlot.sessioned = result['success']
+      })
+      return this   
+    }
+
+    function make_test_case(){
+      $.getJSON( CONRAD_SERVER + '_make_test_case/', function(result){
+        console.log(result)
+      })
+      return this
+    }
+
+    function list_cases(){
+      $.getJSON( CONRAD_SERVER + '_cases/', function(result){
+        console.log(result)
+        cases = result['cases']
+      })  
+      return this
+    }
+
+    function set_case(){
+      $.getJSON( CONRAD_SERVER + '_select_case/', {case: 'TEST CASE'}, function(result){
+        console.log(result)
+      })  
+      return this
+    }      
+
+    function run(){
+      $.getJSON( CONRAD_SERVER + '_run_optimization/', {use_2pass: null, use_slack: null, solver: 'ECOS', verbose: null}, function(result){
+        console.log(result)
+      })  
+      return this
+    }
+
+    function pull_plot_data(){
+      $.getJSON( CONRAD_SERVER + '_plotting_data/', function(result){
+        console.log(result)
+        var data_raw = result['plottingData'][0]
+        var data_flot = []
+        var constraints = {}
+        for (var i = data_raw['constraints'].length - 1; i >= 0; i--) {
+          c = data_raw['constraints'][i]
+          constraints[c['constraintID']] = [c['dose'][0], c['percentile'][0] / 100, c['symbol']]
+          console.log(c['percentile'][0]/100)
+          console.log(c['dose'][0])
+          console.log(c['symbol'])
+        }
+        buildConstraintSeries(constraints)
+        console.log(dvhPlot.upperConstraints)
+        console.log(dvhPlot.lowerConstraints)
+
+        for (var i = data_raw['curve']['dose'].length - 1; i >= 0; i--) {
+          data_flot.push([data_raw['curve']['dose'][i], data_raw['curve']['percentile'][i]])
+        };
+        dvhPlot.dvhCurve = data_flot
+        setPlotData()
+        // dvhPlot.plotData[2].data = data_flot
+        dvhPlot.plotOptions['xaxis']['max'] = 1.2
+
+        var plot = $.plot(dvhPlot.canvas, dvhPlot.plotData, dvhPlot.plotOptions);
+      })  
+      return this
+    }
+
+    function send_constraint(cid, dose, percentile, direction){
+      console.log(percentile)
+      $.getJSON( CONRAD_SERVER + '_change_dvh_constraint/', {constraintID: cid, dose: dose, percentile: percentile, direction: direction}, function(result){
+        console.log(result)
+      })
+      run().pull_plot_data()
+    }
+
+
+    function get_objective(label){
+      $.getJSON( CONRAD_SERVER + '_single_objective/', {structureLabel: label}, function(result){
+        console.log(result)
+        dvhPlot.objectives[label]['w_under'] = result['objectives']['w_under']
+        dvhPlot.objectives[label]['w_over'] = result['objectives']['w_over']
+        dvhPlot.objectives[label]['dose'] = result['objectives']['dose_solver']
+      })   
+      return this      
+    }
+
+    function send_objective(label){
+      w_under = dvhPlot.objectives[label]['w_under']
+      w_over = dvhPlot.objectives[label]['w_over']
+      dose = dvhPlot.objectives[label]['dose'] 
+      console.log("w_under", w_under)
+      console.log("w_over", w_over)
+      console.log("dose", dose)
+      $.getJSON( CONRAD_SERVER + '_change_objective/', {structureLabel: label, dose: dose, w_under: w_under, w_over: w_over}, function(result){
+        console.log(result)
+      })   
+      return this
+    }
+
+    function scale_objective(label, under, scaling){
+      console.log("BEFORE", dvhPlot.objectives[label])
+      if (under === true && label === 0){
+        dvhPlot.objectives[label]['w_under'] = dvhPlot.objectives[label]['w_under'] * scaling
+      } else {
+        dvhPlot.objectives[label]['w_over'] =  dvhPlot.objectives[label]['w_over'] * scaling
+      }
+      console.log("AFTER", dvhPlot.objectives[label])
+      return this
+    }
+
+    window.onload = function(){
+
+      check_session().login().check_session().make_test_case().list_cases().set_case()
+    }
+
+    var button_run = $('#run-button')
+    button_run.bind('click', function(){
+      run().pull_plot_data()
+    })
+
+    var button_wover_incr = $('#wover-x2')
+    button_wover_incr.bind('click', function(){
+      console.log('hello woverx2')
+      get_objective(0).scale_objective(0, false, 20).send_objective(0).run().pull_plot_data()
+    })
+
+    var button_wover_decr = $('#wover-x05')
+    button_wover_decr.bind('click', function(){
+      get_objective(0).scale_objective(0, false, 0.05).send_objective(0).run().pull_plot_data()
+    })
+
+    var button_wunder_incr = $('#wunder-x2')
+    button_wunder_incr.bind('click', function(){
+      get_objective(0).scale_objective(0, true, 20).send_objective(0).run().pull_plot_data()
+    })
+
+    var button_wunder_decr = $('#wunder-x05')
+    button_wunder_decr.bind('click', function(){
+      get_objective(0).scale_objective(0, true, 0.05).send_objective(0).run().pull_plot_data()
+    })
+
+    var button_w_incr = $('#w-x2')
+    button_w_incr.bind('click', function(){
+      get_objective(1).scale_objective(1, false, 20).send_objective(1).run().pull_plot_data()
+    })
+
+    var button_w_decr = $('#w-x05')
+    button_w_decr.bind('click', function(){
+      get_objective(1).scale_objective(1, false, 0.05).send_objective(1).run().pull_plot_data()
+    })
 
 
     </script>

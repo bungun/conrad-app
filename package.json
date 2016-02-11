@@ -4,7 +4,8 @@
   "main": "main.js",
   "devDependencies": {
     "electron-prebuilt": "^0.36.7",
-    "flot": "^0.8.0-alpha"
+    "flot": "^0.8.0-alpha",
+    "request-json": "^0.5.5"
   },
   "description": "desktop application for ConRad treatment planning system",
   "directories": {

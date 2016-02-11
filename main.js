@@ -46,61 +46,60 @@ app.on('ready', function() {
 
   });
 
-  var caseWindow = new BrowserWindow({
-    width: 400,
-    height: 400,
-    show: false,
-  })
-  caseWindow.loadURL('file://' + __dirname + '/case.html')
+
+  // var caseWindow = new BrowserWindow({
+  //   width: 400,
+  //   height: 400,
+  //   show: false,
+  // })
+  // caseWindow.loadURL('file://' + __dirname + '/case.html')
 
 
-  var prefsWindow = new BrowserWindow({
-    width: 400,
-    height: 400,
-    show: false,
-  })
-  prefsWindow.loadURL('file://' + __dirname + '/prefs.html')
-
-
-
-  var editorWindow = new BrowserWindow({
-    width: 100,
-    height: 1
-    00,
-    show: false,
-  })
-  prefsWindow.loadURL('file://' + __dirname + '/editor.html')
+  // var prefsWindow = new BrowserWindow({
+  //   width: 400,
+  //   height: 400,
+  //   show: false,
+  // })
+  // prefsWindow.loadURL('file://' + __dirname + '/prefs.html')
 
 
 
-
-  ipcMain.on('toggle-editor', function() {
-    if (editorWindow.isVisible()){
-      editorWindow.hide()
-    } else {
-      editorWindow.show()
-    }
-  })
-
+  // var editorWindow = new BrowserWindow({
+  //   width: 100,
+  //   height: 1
+  //   00,
+  //   show: false,
+  // })
+  // prefsWindow.loadURL('file://' + __dirname + '/editor.html')
 
 
-  ipcMain.on('show-case', function() {
-    caseWindow.show()
-  })
+  // ipcMain.on('toggle-editor', function() {
+  //   if (editorWindow.isVisible()){
+  //     editorWindow.hide()
+  //   } else {
+  //     editorWindow.show()
+  //   }
+  // })
 
-  ipcMain.on('hide-case', function() {
-    caseWindow.hide()
-  })
 
-  ipcMain.on('show-prefs', function() {
-    prefsWindow.show()
-  })
 
-  ipcMain.on('hide-prefs', function() {
-    prefsWindow.hide()
-  })
+  // ipcMain.on('show-case', function() {
+  //   caseWindow.show()
+  // })
 
-  ipcMain.on('close-main', function() {
-    mainWindow.close()
-  })
+  // ipcMain.on('hide-case', function() {
+  //   caseWindow.hide()
+  // })
+
+  // ipcMain.on('show-prefs', function() {
+  //   prefsWindow.show()
+  // })
+
+  // ipcMain.on('hide-prefs', function() {
+  //   prefsWindow.hide()
+  // })
+
+  // ipcMain.on('close-main', function() {
+  //   mainWindow.close()
+  // })
 });
